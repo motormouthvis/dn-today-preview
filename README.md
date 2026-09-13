@@ -4,5 +4,7 @@ Public static copy of the internal Dream Neighborhood **DN Today** scoreboard so
 
 **Not** the Neighborhood / Schools product. **Not** the marketing site. `noindex`.
 
+On a phone, raw.githack may show a one-tap **Open the page** notice first. Tap it — that is not a login.
+
 Phone link (commit-pinned, avoids a stale main cache):
-https://raw.githack.com/motormouthvis/dn-today-preview/0a9cf9b71bd3bc1c78159c0e1a5a29388300c0db/index.html
+https://raw.githack.com/motormouthvis/dn-today-preview/c3a24507ce1f94649f65e41698c0bac4348b1198/index.html
