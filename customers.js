@@ -204,6 +204,7 @@
 
   function applyImport(existing, plan, choices) {
     const next = existing.map((row) => trimRow(row));
+    const touched = [];
     let added = 0;
     let updated = 0;
     let skipped = 0;
@@ -224,6 +225,7 @@
           });
         }
         next.push(record);
+        touched.push(record.id);
         added += 1;
         return;
       }
@@ -242,10 +244,12 @@
         }
         if (fill) target[field] = item.proposed[field];
       });
+      touched.push(target.id);
       updated += 1;
     });
     return {
       customers: next,
+      touched,
       recap: {
         added,
         updated,
