@@ -1,6 +1,6 @@
 [build]
   publish = "."
-  command = "node tests/check.mjs && node tests/import.test.mjs"
+  command = "node tests/check.mjs && node tests/import.test.mjs && node tests/lists.test.mjs"
 
 [[headers]]
   for = "/*"
