@@ -1,5 +1,7 @@
 # DN Today preview
 
-Public static copy of the internal scoreboard in [dn-control](https://github.com/motormouthvis/dn-control). Not the product app. Example data is fake.
+Public static copy of the internal Dream Neighborhood **DN Today** scoreboard so it can open on a phone.
 
-**Open on a phone:** https://raw.githack.com/motormouthvis/dn-today-preview/main/index.html
+**Not** the Neighborhood / Schools product. **Not** the marketing site. `noindex`.
+
+Phone link: https://raw.githack.com/motormouthvis/dn-today-preview/main/index.html
