@@ -1,7 +1,7 @@
 (function () {
   const data = window.DN_TODAY;
   const board = document.getElementById("board");
-  const customersView = document.getElementById("customers-view");
+  const topic = document.getElementById("topic");
   const dateEl = document.getElementById("board-date");
   const statusEl = document.getElementById("board-status");
   const drawerRoot = document.querySelector(".drawer-root");
@@ -11,6 +11,7 @@
   const drawerBody = document.getElementById("drawer-body");
   const storeKey = "dn-today-customers";
   const api = window.DNCustomers;
+  const TABS = ["home", "product", "customers", "pipeline", "follow-up"];
   let lastFocus = null;
   let importPlan = null;
   let recap = null;
@@ -88,37 +89,49 @@
       : "";
   }
 
-  function rowButton(id, itemId, label, meta, value, tone) {
+  function route() {
+    const raw = location.hash.replace(/^#/, "").trim();
+    const [tabRaw, item] = raw.split("/");
+    const aliases = {
+      "": "home",
+      today: "home",
+      followup: "follow-up",
+    };
+    const tab = aliases[tabRaw] || (TABS.includes(tabRaw) ? tabRaw : "home");
+    return { tab, item: item || "" };
+  }
+
+  function rowLink(tab, itemId, label, meta, value, tone) {
     return `
-      <button class="row" type="button" data-open="${id}" data-item="${itemId}">
+      <a class="row" href="#${tab}${itemId ? `/${itemId}` : ""}">
         <span>
           <p class="row__label tone-dot" data-tone="${tone || "ok"}">${label}</p>
           ${meta ? `<p class="row__meta">${meta}</p>` : ""}
         </span>
         <p class="row__value">${value}</p>
-      </button>`;
+      </a>`;
   }
 
   function productTile() {
     const p = data.product;
     const envRows = p.environments
       .map((env) =>
-        rowButton(p.id, env.id, env.name, env.card, env.version, env.tone)
+        rowLink("product", env.id, env.name, env.card, env.version, env.tone)
       )
       .join("");
     return `
       <article class="tile" data-tile="${p.id}">
         <div class="tile__bar" data-tone="${p.status}"></div>
-        <button class="tile__head" type="button" data-open="${p.id}">
+        <a class="tile__head" href="#product">
           <span>
             <h2 class="tile__title">Product</h2>
             <p class="tile__glance">${p.glance}</p>
           </span>
           ${badge("live")}
-        </button>
+        </a>
         ${envRows}
-        ${rowButton(p.id, p.qa.id, "Overnight QA Action", "Log noise / Walk & Bike watch only", p.qa.action, p.qa.tone)}
-        ${rowButton(p.id, p.lastShip.id, "Last ship", p.lastShip.summary, "PR 125", "ok")}
+        ${rowLink("product", p.qa.id, "Overnight QA Action", "Log noise / Walk & Bike watch only", p.qa.action, p.qa.tone)}
+        ${rowLink("product", p.lastShip.id, "Last ship", p.lastShip.summary, "PR 125", "ok")}
       </article>`;
   }
 
@@ -127,26 +140,26 @@
     const regions = c.regions
       .map(
         (r) => `
-        <button class="region" type="button" data-open="${c.id}" data-item="${r.id}">
+        <a class="region" href="#customers/${r.id}">
           <span class="row__meta">${r.label}</span>
           <strong>${r.count}</strong>
           <span class="row__meta">${r.short} realtors</span>
-        </button>`
+        </a>`
       )
       .join("");
     const problems = c.problems
-      .map((p) => rowButton(c.id, p.id, p.title, p.who, "Watch", p.tone))
+      .map((p) => rowLink("customers", p.id, p.title, p.who, "Watch", p.tone))
       .join("");
     return `
       <article class="tile" data-tile="${c.id}">
         <div class="tile__bar" data-tone="${c.status}"></div>
-        <button class="tile__head" type="button" data-open="${c.id}">
+        <a class="tile__head" href="#customers">
           <span>
             <h2 class="tile__title">Customers</h2>
             <p class="tile__glance">${c.glance}</p>
           </span>
           ${badge("example")}
-        </button>
+        </a>
         ${banner("example")}
         <a class="row list-link" href="#customers">
           <span>
@@ -157,7 +170,7 @@
         </a>
         <div class="regions">${regions}</div>
         ${problems}
-        ${rowButton(c.id, c.stuck.id, c.stuck.title, c.stuck.who, "Stuck", c.stuck.tone)}
+        ${rowLink("customers", c.stuck.id, c.stuck.title, c.stuck.who, "Stuck", c.stuck.tone)}
       </article>`;
   }
 
@@ -169,17 +182,17 @@
           step.split &&
           `${step.split.generic} generic / ${step.split.personalized} personalized`;
         return `
-          <button type="button" data-open="${p.id}" data-item="${step.id}" title="${extra || step.label}">
+          <a href="#pipeline/${step.id}" title="${extra || step.label}">
             <b>${step.count}</b>
             <span>${step.label}</span>
-          </button>`;
+          </a>`;
       })
       .join("");
     const rows = p.rows
       .slice(0, 3)
       .map((row) =>
-        rowButton(
-          p.id,
+        rowLink(
+          "pipeline",
           row.id,
           row.who,
           `${row.kind} · ${row.video}`,
@@ -191,13 +204,13 @@
     return `
       <article class="tile" data-tile="${p.id}">
         <div class="tile__bar" data-tone="${p.status}"></div>
-        <button class="tile__head" type="button" data-open="${p.id}">
+        <a class="tile__head" href="#pipeline">
           <span>
             <h2 class="tile__title">Pipeline</h2>
             <p class="tile__glance">${p.glance}</p>
           </span>
           ${badge("example")}
-        </button>
+        </a>
         ${banner("example")}
         <div class="funnel">${funnel}</div>
         ${rows}
@@ -208,27 +221,27 @@
     const f = data.followup;
     const rows = f.items
       .map((item) =>
-        rowButton(f.id, item.id, item.action, `${item.owner} · ${item.due}`, item.due, item.tone)
+        rowLink("follow-up", item.id, item.action, `${item.owner} · ${item.due}`, item.due, item.tone)
       )
       .join("");
     return `
       <article class="tile" data-tile="${f.id}">
         <div class="tile__bar" data-tone="${f.status}"></div>
-        <button class="tile__head" type="button" data-open="${f.id}">
+        <a class="tile__head" href="#follow-up">
           <span>
             <h2 class="tile__title">Follow-up</h2>
             <p class="tile__glance">${f.glance}</p>
           </span>
           ${badge("example")}
-        </button>
+        </a>
         ${banner("example")}
         ${rows}
       </article>`;
   }
 
-  function detail(itemId, tone, title, body, extra) {
+  function detail(itemId, tone, title, body, extra, activeId) {
     return `
-      <section class="detail" data-item="${itemId}" data-tone="${tone}" data-active="false">
+      <section class="detail" data-item="${itemId}" data-tone="${tone}" data-active="${itemId === activeId}">
         <p class="kicker tone-dot" data-tone="${tone}">${tone}</p>
         <h3>${title}</h3>
         <p>${body}</p>
@@ -242,122 +255,28 @@
       .join("")}</div>`;
   }
 
-  function drawerHtml(id) {
-    if (id === "product") {
-      const p = data.product;
-      return [
-        `<p>${data.productScope} Live numbers as of ${data.asOf}.</p>`,
-        ...p.environments.map((env) =>
-          detail(env.id, env.tone, `${env.name} ${env.version}`, env.note)
-        ),
-        detail(p.qa.id, p.qa.tone, "Overnight QA Action: none", p.qa.detail),
-        detail(p.lastShip.id, "ok", "Last ship", p.lastShip.detail),
-      ].join("");
-    }
-
-    if (id === "customers") {
-      const c = data.customers;
-      const regionBits = c.regions
-        .map((r) =>
-          detail(
-            r.id,
-            "watch",
-            `${r.label} · ${r.count}`,
-            `Example count of ${r.short} realtor accounts. Not a live roster.`
-          )
-        )
-        .join("");
-      return [
-        `<p>Example data only. Names are invented so they cannot be mistaken for live accounts.</p>`,
-        `<p><a class="text-link" href="#customers">Open the example customer list and import</a></p>`,
-        regionBits,
-        ...c.problems.map((p) => detail(p.id, p.tone, p.title, `${p.who}. ${p.detail}`)),
-        detail(c.stuck.id, c.stuck.tone, c.stuck.title, `${c.stuck.who}. ${c.stuck.detail}`),
-      ].join("");
-    }
-
-    if (id === "pipeline") {
-      const p = data.pipeline;
-      const funnelBits = p.funnel
-        .map((step) => {
-          const split = step.split
-            ? ` ${step.split.generic} generic, ${step.split.personalized} personalized.`
-            : "";
-          return detail(
-            step.id,
-            "watch",
-            `${step.label}: ${step.count}`,
-            `Example funnel step.${split} Not live mailbox counts.`
-          );
-        })
-        .join("");
-      const rows = p.rows
-        .map((row) =>
-          detail(
-            row.id,
-            row.stages.includes("booked") ? "ok" : "watch",
-            row.who,
-            `Video: “${row.video}”.`,
-            chips([
-              { label: row.kind, tone: row.kind === "personalized" ? "ok" : "watch" },
-              ...row.stages.map((s) => ({ label: s, tone: "ok" })),
-            ])
-          )
-        )
-        .join("");
-      return `<p>Example realtor outreach. No live mailbox and no email or calendar connectors.</p>${funnelBits}${rows}`;
-    }
-
-    const f = data.followup;
-    const items = f.items
-      .map((item) =>
-        detail(
-          item.id,
-          item.tone,
-          item.action,
-          `Owner: ${item.owner} (${item.ownerRole}). Due ${item.due}.`,
-          chips([{ label: item.owner, tone: item.tone }, { label: item.due, tone: item.tone }])
-        )
-      )
-      .join("");
-    return `<p>Example next actions. Myles is marketing and makes the calls. Bill runs the company. Dream Neighborhood is product / support.</p>${items}`;
+  function topicHead(title, kind, glance) {
+    return `
+      <div class="topic-head">
+        <div>
+          <h2>${title}</h2>
+          ${glance ? `<p class="tile__glance">${glance}</p>` : ""}
+        </div>
+        ${badge(kind)}
+      </div>`;
   }
 
-  function titles(id) {
-    return {
-      product: ["Live product", "Product"],
-      customers: ["Example data", "Customers"],
-      pipeline: ["Example data", "Pipeline"],
-      followup: ["Example data", "Follow-up"],
-    }[id];
-  }
-
-  function openDrawer(id, itemId) {
-    const [kicker, title] = titles(id);
-    lastFocus = document.activeElement;
-    drawerKicker.textContent = kicker;
-    drawerTitle.textContent = title;
-    drawerBody.innerHTML = drawerHtml(id);
-    drawerBody.querySelectorAll(".detail").forEach((el) => {
-      el.dataset.active = String(el.dataset.item === itemId);
-    });
-    drawerRoot.hidden = false;
-    document.body.style.overflow = "hidden";
-    const active = drawerBody.querySelector('[data-active="true"]');
-    drawer.focus();
-    if (active) active.scrollIntoView({ block: "nearest" });
-  }
-
-  function closeDrawer() {
-    drawerRoot.hidden = true;
-    document.body.style.overflow = "";
-    if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
-  }
-
-  function onOpenClick(event) {
-    const opener = event.target.closest("[data-open]");
-    if (!opener) return;
-    openDrawer(opener.dataset.open, opener.dataset.item);
+  function productScreen(itemId) {
+    const p = data.product;
+    return [
+      topicHead("Product", "live", p.glance),
+      `<p class="hint">${data.productScope} Live numbers as of ${data.asOf}.</p>`,
+      ...p.environments.map((env) =>
+        detail(env.id, env.tone, `${env.name} ${env.version}`, env.note, "", itemId)
+      ),
+      detail(p.qa.id, p.qa.tone, "Overnight QA Action: none", p.qa.detail, "", itemId),
+      detail(p.lastShip.id, "ok", "Last ship", p.lastShip.detail, "", itemId),
+    ].join("");
   }
 
   function customerRows() {
@@ -375,16 +294,31 @@
       .join("");
   }
 
-  function customersScreen() {
+  function customersScreen(itemId) {
+    const c = data.customers;
     const recapHtml = recap
       ? `<p class="recap">Added ${recap.added}, updated ${recap.updated}, skipped ${recap.skipped}, duplicates merged ${recap.merged}.</p>`
       : "";
+    const regions = c.regions
+      .map((r) =>
+        detail(
+          r.id,
+          "watch",
+          `${r.label} · ${r.count}`,
+          `Example count of ${r.short} realtor accounts. Not a live roster.`,
+          "",
+          itemId
+        )
+      )
+      .join("");
+    const issues = [
+      ...c.problems.map((p) =>
+        detail(p.id, p.tone, p.title, `${p.who}. ${p.detail}`, "", itemId)
+      ),
+      detail(c.stuck.id, c.stuck.tone, c.stuck.title, `${c.stuck.who}. ${c.stuck.detail}`, "", itemId),
+    ].join("");
     return `
-      <div class="customers-head">
-        <a class="back" href="#today">← Today</a>
-        <h2>Customers</h2>
-        <p class="tile__glance">${customers.length} example records · browser only</p>
-      </div>
+      ${topicHead("Customers", "example", `${customers.length} example records · browser only`)}
       <p class="banner">Example data — not live accounts</p>
       ${recapHtml}
       <div class="import-bar">
@@ -399,7 +333,69 @@
       <div class="tile customers-list">
         <div class="tile__bar" data-tone="watch"></div>
         ${customerRows()}
-      </div>`;
+      </div>
+      ${regions}
+      ${issues}`;
+  }
+
+  function pipelineScreen(itemId) {
+    const p = data.pipeline;
+    const funnelBits = p.funnel
+      .map((step) => {
+        const split = step.split
+          ? ` ${step.split.generic} generic, ${step.split.personalized} personalized.`
+          : "";
+        return detail(
+          step.id,
+          "watch",
+          `${step.label}: ${step.count}`,
+          `Example funnel step.${split} Not live mailbox counts.`,
+          "",
+          itemId
+        );
+      })
+      .join("");
+    const rows = p.rows
+      .map((row) =>
+        detail(
+          row.id,
+          row.stages.includes("booked") ? "ok" : "watch",
+          row.who,
+          `Video: “${row.video}”.`,
+          chips([
+            { label: row.kind, tone: row.kind === "personalized" ? "ok" : "watch" },
+            ...row.stages.map((s) => ({ label: s, tone: "ok" })),
+          ]),
+          itemId
+        )
+      )
+      .join("");
+    return `
+      ${topicHead("Pipeline", "example", p.glance)}
+      ${banner("example")}
+      <p class="hint">Example realtor outreach. No live mailbox and no email or calendar connectors.</p>
+      ${funnelBits}${rows}`;
+  }
+
+  function followupScreen(itemId) {
+    const f = data.followup;
+    const items = f.items
+      .map((item) =>
+        detail(
+          item.id,
+          item.tone,
+          item.action,
+          `Owner: ${item.owner} (${item.ownerRole}). Due ${item.due}.`,
+          chips([{ label: item.owner, tone: item.tone }, { label: item.due, tone: item.tone }]),
+          itemId
+        )
+      )
+      .join("");
+    return `
+      ${topicHead("Follow-up", "example", f.glance)}
+      ${banner("example")}
+      <p class="hint">Example next actions. Myles is marketing and makes the calls. Bill runs the company. Dream Neighborhood is product / support.</p>
+      ${items}`;
   }
 
   function reviewHtml(plan) {
@@ -454,6 +450,12 @@
     drawer.focus();
   }
 
+  function closeDrawer() {
+    drawerRoot.hidden = true;
+    document.body.style.overflow = "";
+    if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
+  }
+
   function runCsv(text) {
     const rows = api.parseCsv(text);
     if (!rows.length) {
@@ -476,13 +478,14 @@
     saveCustomers(customers);
     importPlan = null;
     closeDrawer();
-    location.hash = "customers";
+    if (route().tab !== "customers") location.hash = "customers";
     render();
   }
 
   function customerDetail(id) {
     const row = customers.find((item) => item.id === id);
     if (!row) return;
+    lastFocus = document.activeElement;
     drawerKicker.textContent = "Example data";
     drawerTitle.textContent = row.name;
     drawerBody.innerHTML = `
@@ -498,27 +501,42 @@
     drawer.focus();
   }
 
-  function isCustomers() {
-    return location.hash.replace(/^#/, "") === "customers";
+  function markTabs(active) {
+    document.querySelectorAll(".tabs a").forEach((link) => {
+      const id = link.getAttribute("href").replace(/^#/, "");
+      if (id === active) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
   }
 
   function render() {
+    const { tab, item } = route();
     dateEl.dateTime = nyIso();
     dateEl.textContent = nyDate();
     const boardStatus = overall();
     statusEl.dataset.tone = boardStatus.tone;
     statusEl.textContent = boardStatus.label;
-    const customersMode = isCustomers();
-    board.hidden = customersMode;
-    customersView.hidden = !customersMode;
-    document.querySelector(".board-note").hidden = customersMode;
-    if (customersMode) {
-      customersView.innerHTML = customersScreen();
-    } else {
+    markTabs(tab);
+    const onHome = tab === "home";
+    board.hidden = !onHome;
+    topic.hidden = onHome;
+    document.querySelector(".board-note").hidden = !onHome;
+    if (onHome) {
       board.innerHTML =
         productTile() + customersTile() + pipelineTile() + followupTile();
+      topic.innerHTML = "";
+    } else if (tab === "product") {
+      topic.innerHTML = productScreen(item);
+    } else if (tab === "customers") {
+      topic.innerHTML = customersScreen(item);
+    } else if (tab === "pipeline") {
+      topic.innerHTML = pipelineScreen(item);
+    } else {
+      topic.innerHTML = followupScreen(item);
     }
-    window.scrollTo(0, 0);
+    const active = topic.querySelector('[data-active="true"]');
+    if (active) active.scrollIntoView({ block: "nearest" });
+    else window.scrollTo(0, 0);
   }
 
   render();
@@ -550,9 +568,7 @@
     const person = event.target.closest("[data-customer]");
     if (person) {
       customerDetail(person.dataset.customer);
-      return;
     }
-    onOpenClick(event);
   });
 
   document.addEventListener("change", (event) => {

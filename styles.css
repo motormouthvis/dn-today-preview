@@ -184,8 +184,42 @@ h1 {
   background: rgba(255, 92, 106, 0.12);
 }
 
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  margin: 12px -4px 10px;
+  padding: 6px 4px 8px;
+  background: rgba(7, 17, 14, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+.tabs a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 6px 2px;
+  border-radius: 10px;
+  color: var(--muted);
+  text-decoration: none;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+
+.tabs a[aria-current="page"] {
+  color: #07110e;
+  background: var(--lime);
+}
+
 .board-note {
-  margin: 16px 0 14px;
+  margin: 6px 0 14px;
   font-size: 13px;
   line-height: 1.45;
 }
@@ -244,6 +278,7 @@ h1 {
   color: inherit;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -306,6 +341,7 @@ a.row {
 
 .row:focus-visible,
 .tile__head:focus-visible,
+.tabs a:focus-visible,
 .drawer__close:focus-visible {
   outline: 2px solid var(--lime);
   outline-offset: 2px;
@@ -364,6 +400,7 @@ a.row {
   color: inherit;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -380,6 +417,7 @@ a.row {
   padding: 0 8px 8px;
 }
 
+.funnel a,
 .funnel button {
   margin: 0;
   padding: 8px 4px;
@@ -388,6 +426,8 @@ a.row {
   background: rgba(18, 125, 107, 0.22);
   color: inherit;
   font: inherit;
+  text-decoration: none;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -553,21 +593,33 @@ a.row {
   }
 }
 
+.topic,
 .customers-view {
   display: grid;
   gap: 12px;
 }
 
+.topic > .banner,
 .customers-view > .banner {
   margin: 0;
 }
 
+.topic[hidden],
 .customers-view[hidden] {
   display: none;
 }
 
+.topic-head,
+.customers-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.topic-head h2,
 .customers-head h2 {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 24px;
   letter-spacing: -0.04em;
 }
