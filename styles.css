@@ -1,15 +1,16 @@
 :root {
-  --green-900: #0d5a4d;
+  --green: #127d6b;
+  --green-900: #127d6b;
   --green-700: #127d6b;
-  --green-500: #2aa28c;
+  --green-500: #127d6b;
   --lime: #acef00;
   --lime-pale: #ebf8d1;
   --offwhite: #f8fafc;
-  --mint: #f3faf7;
+  --mint: #ebf8d1;
   --ink: #111827;
   --muted: #64748b;
   --card: #ffffff;
-  --line: #d7e5df;
+  --line: rgba(100, 116, 139, 0.28);
   --shadow: 0 8px 24px rgba(17, 24, 39, 0.06), 0 2px 6px rgba(17, 24, 39, 0.04);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -153,27 +154,38 @@ h1 {
   top: 0;
   z-index: 5;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 4px;
   margin: 12px -16px 10px;
-  padding: 8px 16px 10px;
+  padding: 6px 16px 8px;
   background: rgba(248, 250, 252, 0.94);
+  overflow-x: hidden;
 }
 
 .tabs a {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  padding: 8px 10px;
+  min-height: 36px;
+  min-width: 0;
+  padding: 6px 2px;
   border-radius: var(--radius-pill);
   color: var(--muted);
   text-decoration: none;
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
+  letter-spacing: -0.03em;
   white-space: nowrap;
-  flex: 1 1 calc(33.33% - 6px);
+  flex: 1 1 0;
+}
+
+.tab-full {
+  display: none;
+}
+
+.tab-short {
+  display: inline;
 }
 
 .tabs a[aria-current="page"] {
@@ -216,7 +228,7 @@ h1 {
 
 .tile--hero {
   background: var(--mint);
-  border-color: #b8ddd4;
+  border-color: var(--line);
 }
 
 .tile__kicker {
@@ -373,7 +385,7 @@ a.row {
   height: 4px;
   margin: 4px auto 10px;
   border-radius: 99px;
-  background: #d5dee7;
+  background: var(--line);
 }
 
 .drawer__head {
@@ -438,8 +450,8 @@ a.row {
 }
 
 .detail[data-active="true"] {
-  border-color: var(--green-500);
-  box-shadow: 0 0 0 3px rgba(42, 162, 140, 0.16);
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(18, 125, 107, 0.16);
 }
 
 .topic-head {
@@ -705,6 +717,160 @@ a.row {
   gap: 8px;
 }
 
+.views {
+  padding: 14px 16px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.views--hero {
+  background: var(--lime-pale);
+}
+
+.views .tile__number {
+  font-size: 52px;
+}
+
+.partners {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.product-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.product-cols h4 {
+  margin: 12px 0 6px;
+  font-size: 13px;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 719px) {
+  .product-cols .detail__number {
+    font-size: 28px;
+  }
+
+  .product-cols h3 {
+    font-size: 15px;
+  }
+
+  .product-cols .detail {
+    padding: 10px;
+  }
+}
+
+.release {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--offwhite);
+}
+
+.release summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 800;
+  list-style: none;
+}
+
+.release summary::-webkit-details-marker {
+  display: none;
+}
+
+.release summary::after {
+  content: "▸";
+  float: right;
+  color: var(--green);
+}
+
+.release[open] summary::after {
+  content: "▾";
+}
+
+.release summary span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.release p {
+  margin: 0;
+  padding: 0 12px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.meetings,
+.thread-box {
+  display: grid;
+  gap: 8px;
+}
+
+.meetings h3,
+.thread-box h3 {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.note {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.note__type {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.note p {
+  margin: 0;
+}
+
+.note small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.note-form {
+  display: grid;
+  gap: 8px;
+}
+
+.note-form textarea,
+.note-form select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.note-form textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
 @media (min-width: 720px) {
   body {
     max-width: 920px;
@@ -716,8 +882,27 @@ a.row {
     grid-template-columns: 1fr 1fr;
   }
 
-  .tile--hero {
+  .tile--hero,
+  .views--hero {
     grid-column: 1 / -1;
+  }
+
+  .tab-short {
+    display: none;
+  }
+
+  .tab-full {
+    display: inline;
+  }
+
+  .tabs a {
+    font-size: 13px;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+
+  .product-cols {
+    gap: 10px;
   }
 
   .drawer {
