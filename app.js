@@ -9,8 +9,8 @@
   const drawerTitle = document.getElementById("drawer-title");
   const drawerKicker = document.getElementById("drawer-kicker");
   const drawerBody = document.getElementById("drawer-body");
-  const peopleKey = "dn-today-customers-v2";
-  const listsKey = "dn-today-lists-v2";
+  const peopleKey = "dn-today-customers-v3";
+  const listsKey = "dn-today-lists-v3";
   const api = window.DNCustomers;
   const listsApi = window.DNLists;
   const TABS = ["home", "opportunities", "lists", "customers", "product"];
@@ -24,7 +24,11 @@
   let keepScroll = false;
 
   function seedCustomers() {
-    return data.customers.directory.map((row) => ({ ...row }));
+    return data.customers.directory.map((row) => ({
+      ...row,
+      meetings: (row.meetings || []).map((meeting) => ({ ...meeting })),
+      thread: (row.thread || []).map((entry) => ({ ...entry })),
+    }));
   }
 
   function seedLists() {
@@ -95,6 +99,59 @@
     return personById(id)?.name || "Unknown example";
   }
 
+  function fmt(n) {
+    return new Intl.NumberFormat("en-US").format(Number(n) || 0);
+  }
+
+  function nyWhen(iso) {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: data.timezone,
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date(iso));
+  }
+
+  function partnerName(id) {
+    return data.views.partners.find((item) => item.id === id)?.name || "Example in-house";
+  }
+
+  function totalViews() {
+    return customers.reduce((sum, row) => sum + (Number(row.views) || 0), 0);
+  }
+
+  function partnerViews() {
+    return data.views.partners.map((partner) => ({
+      ...partner,
+      views: customers
+        .filter((row) => (row.partner || "inhouse") === partner.id)
+        .reduce((sum, row) => sum + (Number(row.views) || 0), 0),
+    }));
+  }
+
+  function nextMeeting(row) {
+    return (row.meetings || [])[0] || null;
+  }
+
+  function addThread(id, type, text, who) {
+    const entry = {
+      id: `note-${Date.now()}`,
+      type,
+      at: new Date().toISOString(),
+      who: who || "You",
+      text,
+    };
+    customers = customers.map((row) =>
+      row.id === id ? { ...row, thread: [entry, ...(row.thread || [])] } : row
+    );
+    saveCustomers(customers);
+    recap = type === "call" ? "Called — not a real phone yet." : "Note added.";
+  }
+
   function badge(kind) {
     if (kind === "live") {
       return '<span class="badge" data-kind="live">Live</span>';
@@ -140,6 +197,10 @@
       const listId = lists.some((list) => list.id === parts[1]) ? parts[1] : "";
       return { tab, listId, item: listId ? "detail" : "" };
     }
+    if (tab === "customers") {
+      const customerId = customers.some((row) => row.id === parts[1]) ? parts[1] : "";
+      return { tab, listId: "", item: customerId };
+    }
     return { tab, listId: "", item: parts[1] || "" };
   }
 
@@ -179,10 +240,41 @@
       </a>`;
   }
 
+  function viewsPanel(opts) {
+    const selected = opts.selected;
+    const number = selected ? selected.views || 0 : totalViews();
+    const label = selected ? "Views for this customer" : "Total views";
+    const partnerRows = partnerViews()
+      .map(
+        (partner) => `
+        <a class="row" href="#customers">
+          <span>
+            <p class="row__label">${partner.name}</p>
+            <p class="row__meta">Example partner</p>
+          </span>
+          <p class="row__value">${fmt(partner.views)}</p>
+        </a>`
+      )
+      .join("");
+    return `
+      <section class="views ${opts.hero ? "views--hero" : ""}">
+        ${banner("Example data — not live views")}
+        <p class="kicker">Views</p>
+        <p class="tile__number">${fmt(number)}</p>
+        <p class="tile__label">${label}</p>
+        ${
+          selected
+            ? `<p class="hint">Partner: ${partnerName(selected.partner)}</p>`
+            : `<div class="partners">${partnerRows}</div>`
+        }
+      </section>`;
+  }
+
   function homeScreen() {
     const replied = listsApi.repliedCount(lists);
     const p = data.product;
     return [
+      viewsPanel({ hero: true }),
       homeTile(
         "opportunities",
         "Opportunities",
@@ -212,9 +304,9 @@
         "product",
         "Product",
         "live",
-        p.environments[0].version,
+        p.production.version,
         "Neighborhood production",
-        "QA none · staging v753 · Schools v270"
+        `Staging ${p.staging.version} matches · Schools ${p.schools.version}`
       ),
     ].join("");
   }
@@ -356,11 +448,33 @@
           </a>`;
       })
       .join("");
+    const potentials = customers
+      .map((row) => {
+        const meeting = nextMeeting(row);
+        return `
+          <button class="row" type="button" data-customer="${row.id}">
+            <span>
+              <p class="row__label">${row.name}</p>
+              <p class="row__meta">${
+                meeting
+                  ? `${nyWhen(meeting.at)} · ${meeting.who}`
+                  : "No meeting scheduled"
+              }</p>
+            </span>
+            <p class="row__value">${fmt(row.views || 0)} views</p>
+          </button>`;
+      })
+      .join("");
     return `
       ${topicHead("Lists", "example", "Groups you can talk to. The tool can hold more later.")}
       ${banner()}
       <p class="hint">Each list has one standard HeyGen video. Import into a list. Tap a list to open it.</p>
-      <div class="list-cards">${cards}</div>`;
+      <div class="list-cards">${cards}</div>
+      <section class="thread-box">
+        <h3>Potential customers</h3>
+        <p class="hint">Meetings and a notes thread for every interaction. Tap a person.</p>
+        <div class="people">${potentials}</div>
+      </section>`;
   }
 
   function listDetail(list) {
@@ -413,6 +527,7 @@
     return `
       ${topicHead("Customers", "example", `${customers.length} example records · everyone we know`)}
       ${banner()}
+      ${viewsPanel({})}
       ${recapHtml()}
       <div class="import-bar">
         <button type="button" class="btn" data-sample-import data-import-into="customers">Try sample import</button>
@@ -422,38 +537,51 @@
         </label>
         <button type="button" class="btn btn--ghost" data-reset>Reset example data</button>
       </div>
-      <p class="hint">Dedupe across all people. Email first, then website host. Same person is an Update, not a second card.</p>
+      <p class="hint">Dedupe across all people. Email first, then website host. Same person is an Update, not a second card. Tap a person for views, meetings, and notes.</p>
       <div class="people">${customerRows()}</div>`;
   }
 
-  function productScreen(itemId) {
+  function productScreen() {
     const p = data.product;
-    const cards = p.environments
+    const stagingPrs = (p.staging.prs || []).length
+      ? p.staging.prs
+          .map((pr) => `<p>${pr.title || pr}</p>`)
+          .join("")
+      : `<p class="empty">${p.staging.empty}</p>`;
+    const releases = p.production.releases
       .map(
-        (env) => `
-        <section class="detail" data-item="${env.id}" data-active="${env.id === itemId}">
-          <p class="kicker">Live</p>
-          <p class="detail__number">${env.version}</p>
-          <h3>${env.name}</h3>
-          <p>${env.note}</p>
-        </section>`
+        (rel) => `
+        <details class="release">
+          <summary>
+            ${rel.version}
+            <span>${rel.when}</span>
+          </summary>
+          <p>${rel.changes}</p>
+        </details>`
       )
       .join("");
     return `
       ${topicHead("Product", "live", p.glance)}
       <p class="hint">${data.productScope} Live numbers as of ${data.asOf}.</p>
-      ${cards}
-      <section class="detail" data-item="${p.qa.id}" data-active="${p.qa.id === itemId}">
-        <p class="kicker">Overnight QA</p>
-        <p class="detail__number">${p.qa.action}</p>
-        <h3>QA Action</h3>
-        <p>${p.qa.detail}</p>
-      </section>
-      <section class="detail" data-item="${p.lastShip.id}" data-active="${p.lastShip.id === itemId}">
-        <p class="kicker">Last ship</p>
-        <h3>PR 125</h3>
-        <p>${p.lastShip.detail}</p>
-      </section>`;
+      <div class="product-cols">
+        <section class="detail" data-item="${p.staging.id}">
+          <p class="kicker">Staging</p>
+          <p class="detail__number">${p.staging.version}</p>
+          <h3>Staging</h3>
+          <p>${p.staging.note}</p>
+          <h4>PRs on staging, not production</h4>
+          ${stagingPrs}
+          <p class="hint">${p.staging.gitNote}</p>
+        </section>
+        <section class="detail" data-item="${p.production.id}">
+          <p class="kicker">Live</p>
+          <p class="detail__number">${p.production.version}</p>
+          <h3>Production</h3>
+          <p>${p.production.note}</p>
+          ${releases}
+        </section>
+      </div>
+      <p class="hint">${p.schools.note}</p>`;
   }
 
   function reviewHtml(plan) {
@@ -549,21 +677,71 @@
     render();
   }
 
-  function customerDetail(id) {
-    const row = personById(id);
-    if (!row) return;
-    openDrawer(
-      "Example data",
-      row.name,
-      `
-      <section class="detail" data-active="true">
-        <p>${row.notes || "No notes."}</p>
+  function customerDetailScreen(row) {
+    const meetings = row.meetings || [];
+    const thread = row.thread || [];
+    const meetingRows = meetings.length
+      ? meetings
+          .map(
+            (meeting) => `
+          <section class="note">
+            <p class="note__type">Meeting</p>
+            <p>${meeting.title}</p>
+            <small>${nyWhen(meeting.at)} · ${meeting.who}</small>
+          </section>`
+          )
+          .join("")
+      : `<p class="empty">No meetings on the calendar.</p>`;
+    const notes = thread.length
+      ? thread
+          .map(
+            (entry) => `
+          <section class="note">
+            <p class="note__type">${entry.type}</p>
+            <p>${entry.text}</p>
+            <small>${nyWhen(entry.at)} · ${entry.who}</small>
+          </section>`
+          )
+          .join("")
+      : `<p class="empty">No notes yet.</p>`;
+    return `
+      ${topicHead(row.name, "example", "Potential customer")}
+      ${banner()}
+      <a class="back" href="#customers">Back to customers</a>
+      ${recapHtml()}
+      ${viewsPanel({ selected: row })}
+      <section class="meetings">
+        <h3>Meetings</h3>
+        ${meetingRows}
+      </section>
+      <section class="thread-box">
+        <h3>Notes</h3>
+        <p class="hint">Every email, call, meeting, and video. Add a note. Call logs a note — not a real phone yet.</p>
+        <form class="note-form" data-add-note="${row.id}">
+          <textarea name="note" required placeholder="Add a note"></textarea>
+          <label class="picker">
+            <span>Type</span>
+            <select name="type">
+              <option value="note">Note</option>
+              <option value="email">Email</option>
+              <option value="call">Call</option>
+              <option value="meeting">Meeting</option>
+              <option value="video">Video</option>
+            </select>
+          </label>
+          <button class="btn" type="submit">Add note</button>
+        </form>
+        <button type="button" class="btn btn--ghost" data-log-call="${row.id}">Call</button>
+        ${notes}
+      </section>
+      <section class="detail">
+        <p>${row.notes || "No summary."}</p>
         <p>Email: ${row.email || "—"}</p>
         <p>Website: ${row.website || "—"}</p>
         <p>Phone: ${row.phone || "—"}</p>
         <p>Region: ${row.region || "—"}</p>
-      </section>`
-    );
+        <p>Partner: ${partnerName(row.partner)}</p>
+      </section>`;
   }
 
   function pickedMembers(list) {
@@ -665,9 +843,10 @@
           ? listDetail(listsApi.findList(lists, listId))
           : listsIndex();
     } else if (tab === "customers") {
-      topic.innerHTML = customersScreen();
+      const person = item ? personById(item) : null;
+      topic.innerHTML = person ? customerDetailScreen(person) : customersScreen();
     } else {
-      topic.innerHTML = productScreen(item);
+      topic.innerHTML = productScreen();
     }
     if (keepScroll) {
       keepScroll = false;
@@ -728,8 +907,28 @@
       btn.textContent = "Copied — still does not send";
       return;
     }
+    const callBtn = event.target.closest("[data-log-call]");
+    if (callBtn) {
+      addThread(callBtn.getAttribute("data-log-call"), "call", "Called — not a real phone yet.");
+      keepScroll = true;
+      render();
+      return;
+    }
     const person = event.target.closest("[data-customer]");
-    if (person) customerDetail(person.dataset.customer);
+    if (person) {
+      location.hash = hashFor("customers", "", person.dataset.customer);
+    }
+  });
+
+  document.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-add-note]");
+    if (!form) return;
+    event.preventDefault();
+    const text = String(form.note.value || "").trim();
+    if (!text) return;
+    addThread(form.getAttribute("data-add-note"), form.type.value || "note", text);
+    keepScroll = true;
+    render();
   });
 
   document.addEventListener("change", (event) => {
