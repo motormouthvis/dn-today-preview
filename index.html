@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Internal Dream Neighborhood company scoreboard. Not the product app. Not the marketing site."
+    />
+    <title>DN Today — Dream Neighborhood</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Urbanist:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#board">Skip to board</a>
+
+    <header class="top">
+      <div class="top__brand">
+        <span class="mark" aria-hidden="true"></span>
+        <div>
+          <h1>DN Today</h1>
+          <p class="top__sub">Internal scoreboard · not the product</p>
+        </div>
+      </div>
+      <div class="top__meta">
+        <time id="board-date" datetime="2026-09-13">—</time>
+        <p id="board-status" class="status-pill" data-tone="watch">Needs a look</p>
+      </div>
+    </header>
+
+    <p class="board-note">
+      Product tile is <strong>live</strong> as of 13 Sep 2026.
+      Customers, pipeline, and follow-up are <strong>example data</strong>.
+    </p>
+
+    <main id="board" class="board"></main>
+
+    <p class="foot">
+      Dream Neighborhood control · popup + School Explorer + Neighborhood Explorer
+      only · noindex · not linked from marketing
+    </p>
+
+    <div class="drawer-root" hidden>
+      <div class="drawer-backdrop" data-close></div>
+      <aside
+        id="drawer"
+        class="drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="drawer-title"
+        tabindex="-1"
+      >
+        <div class="drawer__grab" aria-hidden="true"></div>
+        <header class="drawer__head">
+          <div>
+            <p id="drawer-kicker" class="kicker"></p>
+            <h2 id="drawer-title"></h2>
+          </div>
+          <button type="button" class="drawer__close" data-close aria-label="Close">
+            Close
+          </button>
+        </header>
+        <div id="drawer-body" class="drawer__body"></div>
+      </aside>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
