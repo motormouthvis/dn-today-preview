@@ -182,7 +182,7 @@
           p.id,
           row.id,
           row.who,
-          `${row.kind} · ${row.video}`,
+          `${row.kind} \u00b7 ${row.video}`,
           row.stages[row.stages.length - 1],
           row.stages.includes("booked") ? "ok" : "watch"
         )
@@ -208,7 +208,7 @@
     const f = data.followup;
     const rows = f.items
       .map((item) =>
-        rowButton(f.id, item.id, item.action, `${item.owner} · ${item.due}`, item.due, item.tone)
+        rowButton(f.id, item.id, item.action, `${item.owner} \u00b7 ${item.due}`, item.due, item.tone)
       )
       .join("");
     return `
@@ -262,7 +262,7 @@
           detail(
             r.id,
             "watch",
-            `${r.label} · ${r.count}`,
+            `${r.label} \u00b7 ${r.count}`,
             `Example count of ${r.short} realtor accounts. Not a live roster.`
           )
         )
@@ -297,7 +297,7 @@
             row.id,
             row.stages.includes("booked") ? "ok" : "watch",
             row.who,
-            `Video: “${row.video}”.`,
+            `Video: \u201c${row.video}\u201d.`,
             chips([
               { label: row.kind, tone: row.kind === "personalized" ? "ok" : "watch" },
               ...row.stages.map((s) => ({ label: s, tone: "ok" })),
@@ -367,7 +367,7 @@
         <button class="row" type="button" data-customer="${row.id}">
           <span>
             <p class="row__label">${row.name}</p>
-            <p class="row__meta">${row.email || "No email"} · ${row.phone || "No phone"}</p>
+            <p class="row__meta">${row.email || "No email"} \u00b7 ${row.phone || "No phone"}</p>
           </span>
           <p class="row__value">${row.region || ""}</p>
         </button>`
@@ -381,11 +381,11 @@
       : "";
     return `
       <div class="customers-head">
-        <a class="back" href="#today">← Today</a>
+        <a class="back" href="#today">\u2190 Today</a>
         <h2>Customers</h2>
-        <p class="tile__glance">${customers.length} example records · browser only</p>
+        <p class="tile__glance">${customers.length} example records \u00b7 browser only</p>
       </div>
-      <p class="banner">Example data — not live accounts</p>
+      <p class="banner">Example data \u2014 not live accounts</p>
       ${recapHtml}
       <div class="import-bar">
         <button type="button" class="btn" data-sample-import>Try sample import</button>
@@ -415,7 +415,7 @@
             const key = `${index}:${conflict.field}`;
             return `
               <div class="choice">
-                <p><strong>${conflict.field}</strong> — pick one</p>
+                <p><strong>${conflict.field}</strong> \u2014 pick one</p>
                 <label><input type="radio" name="${key}" value="existing" /> Keep existing: ${conflict.existing}</label>
                 <label><input type="radio" name="${key}" value="incoming" checked /> Confirm import: ${conflict.incoming}</label>
               </div>`;
@@ -429,7 +429,7 @@
         }[item.kind];
         return `
           <section class="detail" data-kind="${item.kind}">
-            <p class="kicker">${kindLabel}${item.merged ? ` · ${item.merged} file duplicate collapsed` : ""}</p>
+            <p class="kicker">${kindLabel}${item.merged ? ` \u00b7 ${item.merged} file duplicate collapsed` : ""}</p>
             <h3>${title}</h3>
             <p>${why}</p>
             ${fills}
@@ -439,7 +439,7 @@
       .join("");
     return `
       <p>Review before anything is written. Nothing leaves this phone.</p>
-      <p>${plan.added} new · ${plan.updated} updates · ${plan.conflicts} need a choice · ${plan.skipped} unchanged · ${plan.merged} duplicates merged in the file.</p>
+      <p>${plan.added} new \u00b7 ${plan.updated} updates \u00b7 ${plan.conflicts} need a choice \u00b7 ${plan.skipped} unchanged \u00b7 ${plan.merged} duplicates merged in the file.</p>
       ${cards}
       <button type="button" class="btn" data-apply-import>Apply import</button>`;
   }
@@ -488,10 +488,10 @@
     drawerBody.innerHTML = `
       <section class="detail" data-active="true">
         <p>${row.notes || "No notes."}</p>
-        <p>Email: ${row.email || "—"}</p>
-        <p>Website: ${row.website || "—"}</p>
-        <p>Phone: ${row.phone || "—"}</p>
-        <p>Region: ${row.region || "—"}</p>
+        <p>Email: ${row.email || "\u2014"}</p>
+        <p>Website: ${row.website || "\u2014"}</p>
+        <p>Phone: ${row.phone || "\u2014"}</p>
+        <p>Region: ${row.region || "\u2014"}</p>
       </section>`;
     drawerRoot.hidden = false;
     document.body.style.overflow = "hidden";
@@ -518,6 +518,7 @@
       board.innerHTML =
         productTile() + customersTile() + pipelineTile() + followupTile();
     }
+    window.scrollTo(0, 0);
   }
 
   render();
