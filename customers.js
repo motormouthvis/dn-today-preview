@@ -214,7 +214,14 @@
         return;
       }
       if (item.kind === "add") {
-        const record = { ...item.incoming, id: `imported-${Date.now()}-${index}` };
+        const record = {
+          ...item.incoming,
+          id: `imported-${Date.now()}-${index}`,
+          views: 0,
+          partner: "inhouse",
+          meetings: [],
+          thread: [],
+        };
         if (item.conflicts.length) {
           item.conflicts.forEach((conflict) => {
             if (choices[`${index}:${conflict.field}`] === "existing") {

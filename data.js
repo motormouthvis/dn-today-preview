@@ -1,6 +1,6 @@
 /* DN Today — board snapshot.
    Product figures are live as of 2026-09-13.
-   Opportunities, lists, and customers are invented examples. */
+   Views, opportunities, lists, customers, and notes are invented examples. */
 
 window.DN_TODAY = {
   asOf: "2026-09-13",
@@ -25,46 +25,56 @@ window.DN_TODAY = {
     title: "Product",
     dataKind: "live",
     status: "ok",
-    glance: "v269 shipped last night · QA none",
-    environments: [
-      {
-        id: "nh-prod",
-        name: "Neighborhood production",
-        version: "v269",
-        card: "Shipped last night · PR 125",
-        note: "Shipped last night from main. PR 125.",
-        tone: "ok",
-      },
-      {
-        id: "nh-staging",
-        name: "Neighborhood staging",
-        version: "v753",
-        card: "Same ship as production",
-        note: "Same Explorer chip scroll, Data Shown, and narrow footer that went to production.",
-        tone: "ok",
-      },
-      {
-        id: "schools-prod",
-        name: "Schools production",
-        version: "v270",
-        card: "Not in last night’s Neighborhood ship",
-        note: "Not in last night’s Neighborhood ship. Holding steady.",
-        tone: "ok",
-      },
+    glance: "Production v269 live · staging v753 matches",
+    staging: {
+      id: "staging",
+      name: "Staging",
+      version: "v753",
+      note: "Same explorer code as production right now.",
+      empty: "None — staging and production match",
+      gitNote: "GitHub staging is only the merge-back commit db7494dd. No open staging-only feature PRs.",
+      prs: [],
+    },
+    production: {
+      id: "production",
+      name: "Production",
+      version: "v269",
+      live: true,
+      note: "v269 live.",
+      releases: [
+        {
+          version: "v269",
+          when: "Sat Sep 12, 2026, 11:34 PM ET",
+          iso: "2026-09-12T23:34:00-04:00",
+          changes:
+            "Chip arrows + grab-to-scroll. Admin Data Shown boxes. Narrow embed footer visible.",
+        },
+        {
+          version: "v268",
+          when: "Sun Sep 7, 2026, 11:21 AM ET",
+          iso: "2026-09-07T11:21:00-04:00",
+          changes: "Web workers 3→2 (memory). Not a buyer-facing feature.",
+        },
+        {
+          version: "v267",
+          when: "Fri Sep 4, 2026, 9:03 AM ET",
+          iso: "2026-09-04T09:03:00-04:00",
+          changes: "Motormouth MapTiler key.",
+        },
+      ],
+    },
+    schools: {
+      version: "v270",
+      note: "Schools production v270 — unchanged.",
+    },
+  },
+
+  views: {
+    dataKind: "example",
+    partners: [
+      { id: "realtycandy", name: "Example RealtyCandy" },
+      { id: "inhouse", name: "Example in-house" },
     ],
-    qa: {
-      id: "qa",
-      action: "none",
-      detail:
-        "Overnight QA Action: none. Log noise and a Walk & Bike watch only. No new buyer breakage.",
-      tone: "ok",
-    },
-    lastShip: {
-      id: "last-ship",
-      summary: "Chip scroll + admin Data Shown + narrow embed footer",
-      detail:
-        "PR 125 merged to main and shipped to Neighborhood production as v269. Buyers get chip arrows and grab-to-scroll when tabs overflow, admin Data Shown boxes that match the real tabs, and a visible narrow-embed footer (provided-by, Terms, Privacy, Data sources).",
-    },
   },
 
   customers: {
@@ -82,6 +92,46 @@ window.DN_TODAY = {
         phone: "(555) 010-2001",
         notes: "Leftover snippet on an old embed key",
         region: "SE",
+        partner: "realtycandy",
+        views: 1680,
+        meetings: [
+          {
+            id: "west-m1",
+            at: "2026-09-15T10:00:00-04:00",
+            who: "Myles",
+            title: "Neighborhood Explorer on a listing",
+          },
+        ],
+        thread: [
+          {
+            id: "west-t1",
+            type: "meeting",
+            at: "2026-09-10T15:00:00-04:00",
+            who: "Myles",
+            text: "Walked through Neighborhood Explorer on one of their listings.",
+          },
+          {
+            id: "west-t2",
+            type: "video",
+            at: "2026-09-08T10:12:00-04:00",
+            who: "Myles",
+            text: "Sent the LocalLogic switch HeyGen video.",
+          },
+          {
+            id: "west-t3",
+            type: "email",
+            at: "2026-09-08T09:40:00-04:00",
+            who: "Myles",
+            text: "Intro email before the video.",
+          },
+          {
+            id: "west-t4",
+            type: "call",
+            at: "2026-09-05T16:20:00-04:00",
+            who: "Myles",
+            text: "Called about the leftover snippet on an old embed key.",
+          },
+        ],
       },
       {
         id: "piedmont",
@@ -91,6 +141,32 @@ window.DN_TODAY = {
         phone: "(555) 010-2200",
         notes: "School Explorer snippet missing on the new template",
         region: "SE",
+        partner: "inhouse",
+        views: 920,
+        meetings: [
+          {
+            id: "piedmont-m1",
+            at: "2026-09-17T09:00:00-04:00",
+            who: "Dream Neighborhood",
+            title: "School Explorer snippet on the new template",
+          },
+        ],
+        thread: [
+          {
+            id: "piedmont-t1",
+            type: "email",
+            at: "2026-09-09T11:15:00-04:00",
+            who: "Myles",
+            text: "They said the School Explorer snippet is missing on the new template.",
+          },
+          {
+            id: "piedmont-t2",
+            type: "video",
+            at: "2026-09-06T14:05:00-04:00",
+            who: "Myles",
+            text: "Sent the free School Explorer upgrade video.",
+          },
+        ],
       },
       {
         id: "harbor",
@@ -100,6 +176,25 @@ window.DN_TODAY = {
         phone: "",
         notes: "Watched the LocalLogic switch video",
         region: "NE",
+        partner: "inhouse",
+        views: 740,
+        meetings: [],
+        thread: [
+          {
+            id: "harbor-t1",
+            type: "video",
+            at: "2026-09-07T13:22:00-04:00",
+            who: "Myles",
+            text: "Watched the LocalLogic switch video.",
+          },
+          {
+            id: "harbor-t2",
+            type: "email",
+            at: "2026-09-07T09:05:00-04:00",
+            who: "Myles",
+            text: "Sent the video link. No phone on file.",
+          },
+        ],
       },
       {
         id: "lakeside",
@@ -109,6 +204,18 @@ window.DN_TODAY = {
         phone: "(555) 010-2500",
         notes: "On the LocalLogic list and the School Explorer upgrade list",
         region: "NE",
+        partner: "inhouse",
+        views: 1100,
+        meetings: [],
+        thread: [
+          {
+            id: "lakeside-t1",
+            type: "email",
+            at: "2026-09-08T16:40:00-04:00",
+            who: "Myles",
+            text: "On both the LocalLogic list and the School Explorer upgrade list.",
+          },
+        ],
       },
       {
         id: "oak",
@@ -118,6 +225,18 @@ window.DN_TODAY = {
         phone: "(555) 010-2600",
         notes: "IDX site has no neighborhood data",
         region: "SE",
+        partner: "realtycandy",
+        views: 880,
+        meetings: [],
+        thread: [
+          {
+            id: "oak-t1",
+            type: "email",
+            at: "2026-09-04T10:18:00-04:00",
+            who: "Myles",
+            text: "IDX site has no neighborhood data.",
+          },
+        ],
       },
       {
         id: "ridge",
@@ -127,6 +246,39 @@ window.DN_TODAY = {
         phone: "(555) 010-2700",
         notes: "Replied after the LocalLogic video",
         region: "NE",
+        partner: "inhouse",
+        views: 1320,
+        meetings: [
+          {
+            id: "ridge-m1",
+            at: "2026-09-16T14:30:00-04:00",
+            who: "Bill",
+            title: "Follow-up after they replied",
+          },
+        ],
+        thread: [
+          {
+            id: "ridge-t1",
+            type: "email",
+            at: "2026-09-11T08:55:00-04:00",
+            who: "Example Partners — Ridge",
+            text: "Replied after the LocalLogic video. Ready to talk.",
+          },
+          {
+            id: "ridge-t2",
+            type: "video",
+            at: "2026-09-09T11:02:00-04:00",
+            who: "Myles",
+            text: "Sent the LocalLogic switch HeyGen video.",
+          },
+          {
+            id: "ridge-t3",
+            type: "call",
+            at: "2026-09-03T15:10:00-04:00",
+            who: "Myles",
+            text: "Left a voicemail. They wrote back after the video.",
+          },
+        ],
       },
       {
         id: "candy",
@@ -136,6 +288,25 @@ window.DN_TODAY = {
         phone: "(555) 010-1000",
         notes: "RealtyCandy leftover branding on three example dashboards",
         region: "SE",
+        partner: "realtycandy",
+        views: 2140,
+        meetings: [],
+        thread: [
+          {
+            id: "candy-t1",
+            type: "call",
+            at: "2026-09-10T12:30:00-04:00",
+            who: "Myles",
+            text: "Talked through RealtyCandy leftover branding on three example dashboards.",
+          },
+          {
+            id: "candy-t2",
+            type: "video",
+            at: "2026-09-06T09:20:00-04:00",
+            who: "Myles",
+            text: "Sent the free School Explorer upgrade video.",
+          },
+        ],
       },
       {
         id: "maple",
@@ -145,6 +316,18 @@ window.DN_TODAY = {
         phone: "(555) 010-2800",
         notes: "Stuck on the listing popup. Not on an outreach list.",
         region: "SE",
+        partner: "realtycandy",
+        views: 610,
+        meetings: [],
+        thread: [
+          {
+            id: "maple-t1",
+            type: "email",
+            at: "2026-09-02T17:45:00-04:00",
+            who: "Dream Neighborhood",
+            text: "Stuck on the listing popup. Not on an outreach list.",
+          },
+        ],
       },
       {
         id: "brook",
@@ -154,6 +337,32 @@ window.DN_TODAY = {
         phone: "(555) 010-2900",
         notes: "Free School Explorer — replied about upgrading",
         region: "NE",
+        partner: "inhouse",
+        views: 780,
+        meetings: [
+          {
+            id: "brook-m1",
+            at: "2026-09-18T11:00:00-04:00",
+            who: "Myles",
+            title: "Upgrade from free School Explorer",
+          },
+        ],
+        thread: [
+          {
+            id: "brook-t1",
+            type: "email",
+            at: "2026-09-12T10:08:00-04:00",
+            who: "Example Homes — Brook",
+            text: "Replied about upgrading from free School Explorer.",
+          },
+          {
+            id: "brook-t2",
+            type: "video",
+            at: "2026-09-10T09:30:00-04:00",
+            who: "Myles",
+            text: "Sent the upgrade video.",
+          },
+        ],
       },
       {
         id: "summit",
@@ -163,6 +372,18 @@ window.DN_TODAY = {
         phone: "(555) 010-3000",
         notes: "LocalLogic office, follow-up sent",
         region: "SE",
+        partner: "inhouse",
+        views: 560,
+        meetings: [],
+        thread: [
+          {
+            id: "summit-t1",
+            type: "email",
+            at: "2026-09-11T15:16:00-04:00",
+            who: "Myles",
+            text: "Follow-up sent. LocalLogic office.",
+          },
+        ],
       },
       {
         id: "pine",
@@ -172,6 +393,25 @@ window.DN_TODAY = {
         phone: "(555) 010-3100",
         notes: "IDX with no neighborhood data — replied",
         region: "NE",
+        partner: "realtycandy",
+        views: 1190,
+        meetings: [],
+        thread: [
+          {
+            id: "pine-t1",
+            type: "email",
+            at: "2026-09-12T08:12:00-04:00",
+            who: "Example Realty — Pine",
+            text: "Replied. IDX with no neighborhood data.",
+          },
+          {
+            id: "pine-t2",
+            type: "video",
+            at: "2026-09-08T14:44:00-04:00",
+            who: "Myles",
+            text: "Sent the IDX neighborhood-data video.",
+          },
+        ],
       },
       {
         id: "vale",
@@ -181,6 +421,18 @@ window.DN_TODAY = {
         phone: "(555) 010-3200",
         notes: "IDX follow-up sent",
         region: "SE",
+        partner: "inhouse",
+        views: 450,
+        meetings: [],
+        thread: [
+          {
+            id: "vale-t1",
+            type: "email",
+            at: "2026-09-09T13:50:00-04:00",
+            who: "Myles",
+            text: "IDX follow-up sent.",
+          },
+        ],
       },
       {
         id: "quarry",
@@ -190,6 +442,18 @@ window.DN_TODAY = {
         phone: "(555) 010-3300",
         notes: "Free School Explorer, no video yet on IDX list",
         region: "NE",
+        partner: "inhouse",
+        views: 390,
+        meetings: [],
+        thread: [
+          {
+            id: "quarry-t1",
+            type: "note",
+            at: "2026-09-06T11:00:00-04:00",
+            who: "Myles",
+            text: "Free School Explorer. No video yet on the IDX list.",
+          },
+        ],
       },
     ],
   },
