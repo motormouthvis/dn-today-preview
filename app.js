@@ -1,6 +1,7 @@
 (function () {
   const data = window.DN_TODAY;
   const board = document.getElementById("board");
+  const customersView = document.getElementById("customers-view");
   const dateEl = document.getElementById("board-date");
   const statusEl = document.getElementById("board-status");
   const drawerRoot = document.querySelector(".drawer-root");
@@ -8,7 +9,34 @@
   const drawerTitle = document.getElementById("drawer-title");
   const drawerKicker = document.getElementById("drawer-kicker");
   const drawerBody = document.getElementById("drawer-body");
+  const storeKey = "dn-today-customers";
+  const api = window.DNCustomers;
   let lastFocus = null;
+  let importPlan = null;
+  let recap = null;
+
+  function seedCustomers() {
+    return data.customers.directory.map((row) => ({ ...row }));
+  }
+
+  function loadCustomers() {
+    try {
+      const raw = localStorage.getItem(storeKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      }
+    } catch (_err) {
+      /* demo storage only */
+    }
+    return seedCustomers();
+  }
+
+  function saveCustomers(rows) {
+    localStorage.setItem(storeKey, JSON.stringify(rows));
+  }
+
+  let customers = loadCustomers();
 
   function nyDate() {
     return new Intl.DateTimeFormat("en-US", {
@@ -120,6 +148,13 @@
           ${badge("example")}
         </button>
         ${banner("example")}
+        <a class="row list-link" href="#customers">
+          <span>
+            <p class="row__label">Open customer list & import</p>
+            <p class="row__meta">Example roster · CSV in the browser only</p>
+          </span>
+          <p class="row__value">${customers.length}</p>
+        </a>
         <div class="regions">${regions}</div>
         ${problems}
         ${rowButton(c.id, c.stuck.id, c.stuck.title, c.stuck.who, "Stuck", c.stuck.tone)}
@@ -234,6 +269,7 @@
         .join("");
       return [
         `<p>Example data only. Names are invented so they cannot be mistaken for live accounts.</p>`,
+        `<p><a class="text-link" href="#customers">Open the example customer list and import</a></p>`,
         regionBits,
         ...c.problems.map((p) => detail(p.id, p.tone, p.title, `${p.who}. ${p.detail}`)),
         detail(c.stuck.id, c.stuck.tone, c.stuck.title, `${c.stuck.who}. ${c.stuck.detail}`),
@@ -324,21 +360,205 @@
     openDrawer(opener.dataset.open, opener.dataset.item);
   }
 
-  dateEl.dateTime = nyIso();
-  dateEl.textContent = nyDate();
-  const boardStatus = overall();
-  statusEl.dataset.tone = boardStatus.tone;
-  statusEl.textContent = boardStatus.label;
+  function customerRows() {
+    return customers
+      .map(
+        (row) => `
+        <button class="row" type="button" data-customer="${row.id}">
+          <span>
+            <p class="row__label">${row.name}</p>
+            <p class="row__meta">${row.email || "No email"} · ${row.phone || "No phone"}</p>
+          </span>
+          <p class="row__value">${row.region || ""}</p>
+        </button>`
+      )
+      .join("");
+  }
 
-  board.innerHTML =
-    productTile() + customersTile() + pipelineTile() + followupTile();
+  function customersScreen() {
+    const recapHtml = recap
+      ? `<p class="recap">Added ${recap.added}, updated ${recap.updated}, skipped ${recap.skipped}, duplicates merged ${recap.merged}.</p>`
+      : "";
+    return `
+      <div class="customers-head">
+        <a class="back" href="#today">← Today</a>
+        <h2>Customers</h2>
+        <p class="tile__glance">${customers.length} example records · browser only</p>
+      </div>
+      <p class="banner">Example data — not live accounts</p>
+      ${recapHtml}
+      <div class="import-bar">
+        <button type="button" class="btn" data-sample-import>Try sample import</button>
+        <label class="btn btn--ghost">
+          Import CSV
+          <input id="csv-file" type="file" accept=".csv,text/csv" hidden />
+        </label>
+        <button type="button" class="btn btn--ghost" data-reset-customers>Reset example list</button>
+      </div>
+      <p class="hint">Columns: name, email, website, phone, notes. Match on email first, then website host. Same person is an Update, not a second card. Conflicts wait for Confirm / Keep existing.</p>
+      <div class="tile customers-list">
+        <div class="tile__bar" data-tone="watch"></div>
+        ${customerRows()}
+      </div>`;
+  }
+
+  function reviewHtml(plan) {
+    const cards = plan.items
+      .map((item, index) => {
+        const title = item.incoming.name || item.existing?.name || "Untitled";
+        const why = item.reason ? `Matched on ${item.reason}` : "New example record";
+        const fills = item.fills.length
+          ? `<p>Empty fields to fill: ${item.fills.join(", ")}.</p>`
+          : "";
+        const conflicts = item.conflicts
+          .map((conflict) => {
+            const key = `${index}:${conflict.field}`;
+            return `
+              <div class="choice">
+                <p><strong>${conflict.field}</strong> — pick one</p>
+                <label><input type="radio" name="${key}" value="existing" /> Keep existing: ${conflict.existing}</label>
+                <label><input type="radio" name="${key}" value="incoming" checked /> Confirm import: ${conflict.incoming}</label>
+              </div>`;
+          })
+          .join("");
+        const kindLabel = {
+          add: "New",
+          update: "Update",
+          conflict: "Needs a choice",
+          skip: "No change",
+        }[item.kind];
+        return `
+          <section class="detail" data-kind="${item.kind}">
+            <p class="kicker">${kindLabel}${item.merged ? ` · ${item.merged} file duplicate collapsed` : ""}</p>
+            <h3>${title}</h3>
+            <p>${why}</p>
+            ${fills}
+            ${conflicts}
+          </section>`;
+      })
+      .join("");
+    return `
+      <p>Review before anything is written. Nothing leaves this phone.</p>
+      <p>${plan.added} new · ${plan.updated} updates · ${plan.conflicts} need a choice · ${plan.skipped} unchanged · ${plan.merged} duplicates merged in the file.</p>
+      ${cards}
+      <button type="button" class="btn" data-apply-import>Apply import</button>`;
+  }
+
+  function openReview(plan) {
+    importPlan = plan;
+    drawerKicker.textContent = "Example data";
+    drawerTitle.textContent = "Import review";
+    drawerBody.innerHTML = reviewHtml(plan);
+    drawerRoot.hidden = false;
+    document.body.style.overflow = "hidden";
+    drawer.focus();
+  }
+
+  function runCsv(text) {
+    const rows = api.parseCsv(text);
+    if (!rows.length) {
+      recap = { added: 0, updated: 0, skipped: 0, merged: 0 };
+      render();
+      return;
+    }
+    openReview(api.planImport(customers, rows));
+  }
+
+  function applyReview() {
+    if (!importPlan) return;
+    const choices = {};
+    drawerBody.querySelectorAll('input[type="radio"]:checked').forEach((input) => {
+      choices[input.name] = input.value;
+    });
+    const result = api.applyImport(customers, importPlan, choices);
+    customers = result.customers;
+    recap = result.recap;
+    saveCustomers(customers);
+    importPlan = null;
+    closeDrawer();
+    location.hash = "customers";
+    render();
+  }
+
+  function customerDetail(id) {
+    const row = customers.find((item) => item.id === id);
+    if (!row) return;
+    drawerKicker.textContent = "Example data";
+    drawerTitle.textContent = row.name;
+    drawerBody.innerHTML = `
+      <section class="detail" data-active="true">
+        <p>${row.notes || "No notes."}</p>
+        <p>Email: ${row.email || "—"}</p>
+        <p>Website: ${row.website || "—"}</p>
+        <p>Phone: ${row.phone || "—"}</p>
+        <p>Region: ${row.region || "—"}</p>
+      </section>`;
+    drawerRoot.hidden = false;
+    document.body.style.overflow = "hidden";
+    drawer.focus();
+  }
+
+  function isCustomers() {
+    return location.hash.replace(/^#/, "") === "customers";
+  }
+
+  function render() {
+    dateEl.dateTime = nyIso();
+    dateEl.textContent = nyDate();
+    const boardStatus = overall();
+    statusEl.dataset.tone = boardStatus.tone;
+    statusEl.textContent = boardStatus.label;
+    const customersMode = isCustomers();
+    board.hidden = customersMode;
+    customersView.hidden = !customersMode;
+    document.querySelector(".board-note").hidden = customersMode;
+    if (customersMode) {
+      customersView.innerHTML = customersScreen();
+    } else {
+      board.innerHTML =
+        productTile() + customersTile() + pipelineTile() + followupTile();
+    }
+  }
+
+  render();
+  window.addEventListener("hashchange", () => {
+    closeDrawer();
+    render();
+  });
 
   document.addEventListener("click", (event) => {
     if (event.target.closest("[data-close]")) {
       closeDrawer();
       return;
     }
+    if (event.target.closest("[data-reset-customers]")) {
+      customers = seedCustomers();
+      saveCustomers(customers);
+      recap = null;
+      render();
+      return;
+    }
+    if (event.target.closest("[data-sample-import]")) {
+      runCsv(api.SAMPLE_CSV);
+      return;
+    }
+    if (event.target.closest("[data-apply-import]")) {
+      applyReview();
+      return;
+    }
+    const person = event.target.closest("[data-customer]");
+    if (person) {
+      customerDetail(person.dataset.customer);
+      return;
+    }
     onOpenClick(event);
+  });
+
+  document.addEventListener("change", (event) => {
+    if (event.target.id === "csv-file" && event.target.files?.[0]) {
+      event.target.files[0].text().then(runCsv);
+      event.target.value = "";
+    }
   });
 
   document.addEventListener("keydown", (event) => {

@@ -199,6 +199,10 @@ h1 {
   gap: 12px;
 }
 
+.board[hidden] {
+  display: none;
+}
+
 .tile {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 28%), var(--card);
   border: 1px solid var(--line);
@@ -285,7 +289,8 @@ h1 {
   );
 }
 
-.row {
+.row,
+a.row {
   width: calc(100% - 16px);
   margin: 0 8px 8px;
   padding: 11px 12px;
@@ -296,6 +301,7 @@ h1 {
   font: inherit;
   text-align: left;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .row:focus-visible,
@@ -545,4 +551,118 @@ h1 {
   .badge[data-kind="live"] {
     animation: none;
   }
+}
+
+.customers-view {
+  display: grid;
+  gap: 12px;
+}
+
+.customers-view > .banner {
+  margin: 0;
+}
+
+.customers-view[hidden] {
+  display: none;
+}
+
+.customers-head h2 {
+  margin: 4px 0 0;
+  font-size: 24px;
+  letter-spacing: -0.04em;
+}
+
+.back,
+.text-link {
+  color: var(--lime);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back:hover,
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.import-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--lime);
+  color: #07110e;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn--ghost {
+  background: rgba(232, 243, 238, 0.08);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.hint,
+.recap {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.recap {
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #10241e;
+  background: var(--lime);
+  font-weight: 700;
+}
+
+.customers-list {
+  padding-bottom: 8px;
+}
+
+.customers-list .row:first-of-type {
+  margin-top: 10px;
+}
+
+.choice {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.choice label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(7, 17, 14, 0.45);
+  border: 1px solid rgba(232, 243, 238, 0.08);
+}
+
+.detail[data-kind="add"] {
+  border-color: rgba(61, 220, 151, 0.35);
+}
+
+.detail[data-kind="update"] {
+  border-color: rgba(245, 193, 76, 0.35);
+}
+
+.detail[data-kind="conflict"] {
+  border-color: rgba(255, 92, 106, 0.45);
+}
+
+.drawer__body .btn {
+  width: 100%;
+  margin-top: 8px;
 }
