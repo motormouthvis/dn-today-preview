@@ -155,9 +155,9 @@ h1 {
   z-index: 5;
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 2px;
   margin: 12px -16px 10px;
-  padding: 6px 16px 8px;
+  padding: 6px 6px 8px;
   background: rgba(248, 250, 252, 0.94);
   overflow-x: hidden;
 }
@@ -168,14 +168,14 @@ h1 {
   justify-content: center;
   min-height: 36px;
   min-width: 0;
-  padding: 6px 2px;
+  padding: 6px 1px;
   border-radius: var(--radius-pill);
   color: var(--muted);
   text-decoration: none;
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   white-space: nowrap;
   flex: 1 1 0;
 }
@@ -318,6 +318,7 @@ a.row {
 .drawer__close:focus-visible,
 .count:focus-visible,
 .btn:focus-visible,
+.analyze-btn:focus-visible,
 .person:focus-within {
   outline: 2px solid var(--green-700);
   outline-offset: 2px;
@@ -854,7 +855,9 @@ a.row {
 }
 
 .note-form textarea,
-.note-form select {
+.note-form select,
+.note-form input,
+.picker input {
   width: 100%;
   min-height: 48px;
   padding: 10px 12px;
@@ -871,6 +874,166 @@ a.row {
   resize: vertical;
 }
 
+.analyze-btn {
+  display: flex;
+  width: 100%;
+  min-height: 64px;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--lime);
+  color: var(--ink);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.campaigns {
+  display: grid;
+  gap: 12px;
+}
+
+.campaign {
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.campaign--hero {
+  background: var(--mint);
+}
+
+.campaign--active,
+.campaign[data-active="true"] {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(18, 125, 107, 0.16);
+}
+
+.campaign h3 {
+  margin: 8px 0 10px;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.campaign p {
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.campaign ul {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.campaign li {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--lime-pale);
+  font-weight: 700;
+}
+
+.campaign--hero li {
+  background: var(--card);
+}
+
+.campaign li b {
+  color: var(--green-900);
+  margin-right: 6px;
+}
+
+.campaign .actions {
+  position: static;
+  margin: 12px 0 0;
+  padding: 0;
+  background: transparent;
+}
+
+.campaign--parked {
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.campaign--parked p {
+  margin: 0;
+  font-weight: 800;
+}
+
+.status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 8px;
+}
+
+.step {
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  background: var(--offwhite);
+  border: 1px solid var(--line);
+}
+
+.step.is-on {
+  color: var(--green-900);
+  background: var(--lime-pale);
+}
+
+.step.is-now {
+  color: var(--lime);
+  background: var(--green-700);
+  border-color: var(--green-700);
+}
+
+.bar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--lime-pale);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: 99px;
+}
+
+.analyze-section {
+  margin-bottom: 16px;
+}
+
+.analyze-section h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.drawer--analyze {
+  max-height: min(94vh, 900px);
+}
+
+@media (max-width: 359px) {
+  .tabs a {
+    font-size: 10px;
+  }
+}
+
 @media (min-width: 720px) {
   body {
     max-width: 920px;
@@ -883,21 +1046,17 @@ a.row {
   }
 
   .tile--hero,
-  .views--hero {
+  .views--hero,
+  .analyze-btn {
     grid-column: 1 / -1;
   }
 
-  .tab-short {
-    display: none;
-  }
-
-  .tab-full {
-    display: inline;
+  .analyze-btn {
+    font-size: 24px;
+    min-height: 72px;
   }
 
   .tabs a {
-    font-size: 13px;
-    padding: 8px 10px;
     min-height: 40px;
   }
 
@@ -913,5 +1072,24 @@ a.row {
     width: min(440px, 92vw);
     max-height: none;
     border-radius: 0;
+  }
+
+  .drawer--analyze {
+    width: min(520px, 94vw);
+  }
+}
+
+@media (min-width: 860px) {
+  .tab-short {
+    display: none;
+  }
+
+  .tab-full {
+    display: inline;
+  }
+
+  .tabs a {
+    font-size: 13px;
+    padding: 8px 8px;
   }
 }
