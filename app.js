@@ -9,12 +9,14 @@
   const drawerTitle = document.getElementById("drawer-title");
   const drawerKicker = document.getElementById("drawer-kicker");
   const drawerBody = document.getElementById("drawer-body");
-  const peopleKey = "dn-today-customers-v3";
-  const listsKey = "dn-today-lists-v3";
   const api = window.DNCustomers;
   const listsApi = window.DNLists;
-  const TABS = ["home", "opportunities", "lists", "customers", "product"];
+  const campaignsApi = window.DNCampaigns;
+  const TABS = ["home", "opportunities", "lists", "customers", "product", "campaigns"];
   const FILTERS = ["total", "videos", "followups", "responded", "a", "b", "c"];
+  const peopleKey = "dn-today-customers-v3";
+  const listsKey = "dn-today-lists-v3";
+  const campaignsKey = "dn-today-campaigns-v1";
   let lastFocus = null;
   let importPlan = null;
   let importTarget = "customers";
@@ -22,6 +24,7 @@
   let selectedIds = new Set();
   let lastDraft = "";
   let keepScroll = false;
+  const progressTimers = {};
 
   function seedCustomers() {
     return data.customers.directory.map((row) => ({
@@ -33,6 +36,10 @@
 
   function seedLists() {
     return data.lists.items.map((list) => listsApi.cloneList(list));
+  }
+
+  function seedCampaigns() {
+    return campaignsApi.seed(data.campaigns.items);
   }
 
   function loadCustomers() {
@@ -69,8 +76,26 @@
     localStorage.setItem(listsKey, JSON.stringify(rows));
   }
 
+  function loadCampaigns() {
+    try {
+      const raw = localStorage.getItem(campaignsKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length && parsed[0].variants) return parsed;
+      }
+    } catch (_err) {
+      /* demo storage only */
+    }
+    return seedCampaigns();
+  }
+
+  function saveCampaigns(rows) {
+    localStorage.setItem(campaignsKey, JSON.stringify(rows));
+  }
+
   let customers = loadCustomers();
   let lists = loadLists();
+  let campaigns = loadCampaigns();
 
   function nyDate() {
     return new Intl.DateTimeFormat("en-US", {
@@ -177,6 +202,8 @@
       followup: "opportunities",
       "follow-up": "opportunities",
       pipeline: "opportunities",
+      camp: "campaigns",
+      campaign: "campaigns",
     };
     const tabRaw = aliases[parts[0]] || parts[0] || "home";
     const tab = TABS.includes(tabRaw) ? tabRaw : "home";
@@ -201,6 +228,10 @@
       const customerId = customers.some((row) => row.id === parts[1]) ? parts[1] : "";
       return { tab, listId: "", item: customerId };
     }
+    if (tab === "campaigns") {
+      const campaignId = campaigns.some((row) => row.id === parts[1]) ? parts[1] : "";
+      return { tab, listId: "", item: campaignId };
+    }
     return { tab, listId: "", item: parts[1] || "" };
   }
 
@@ -215,6 +246,7 @@
     if (tab === "lists") return "#lists";
     if (tab === "customers") return item ? `#customers/${item}` : "#customers";
     if (tab === "product") return item ? `#product/${item}` : "#product";
+    if (tab === "campaigns") return item ? `#campaigns/${item}` : "#campaigns";
     return "#home";
   }
 
@@ -270,19 +302,45 @@
       </section>`;
   }
 
+  function analyzeButton() {
+    return `
+      <button type="button" class="analyze-btn" data-analyze>
+        Complete analysis
+      </button>`;
+  }
+
   function homeScreen() {
     const replied = listsApi.repliedCount(lists);
     const p = data.product;
+    const waiting = campaignsApi.proposedCount(campaigns);
+    const running = campaignsApi.openCount(campaigns);
+    const campNum = waiting || running;
+    const campLabel = waiting
+      ? waiting === 1
+        ? "waiting for OK"
+        : "waiting for OK"
+      : running === 1
+        ? "running (mock)"
+        : "running (mock)";
     return [
+      analyzeButton(),
       viewsPanel({ hero: true }),
+      homeTile(
+        "campaigns",
+        "Campaigns",
+        "example",
+        campNum,
+        campLabel,
+        "DNAi proposes. You say OK. Machine does the rest except calls.",
+        true
+      ),
       homeTile(
         "opportunities",
         "Opportunities",
         "example",
         replied,
         replied === 1 ? "person replied" : "people replied",
-        "Tap to talk. Pick a list, then a number.",
-        true
+        "Tap to talk. Pick a list, then a number."
       ),
       homeTile(
         "lists",
@@ -584,6 +642,203 @@
       <p class="hint">${p.schools.note}</p>`;
   }
 
+  function esc(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function statusStrip(row) {
+    const idx = campaignsApi.stageIndex(row.status);
+    const steps = campaignsApi.STAGES.map((stage, index) => {
+      const on = idx >= 0 && index <= idx;
+      const current = stage.id === row.status;
+      let label = stage.label;
+      if (current && (row.status === "sending" || row.status === "tracking") && row.progress) {
+        label = `${stage.label} ${row.progress}%`;
+      }
+      if (current && row.status === "call-queue") {
+        label = `Call queue · ${fmt(row.queueSize || row.callQueueEstimate)}`;
+      }
+      return `<span class="step${on ? " is-on" : ""}${current ? " is-now" : ""}">${label}</span>`;
+    }).join("");
+    const width =
+      row.status === "call-queue" ? 100 : row.status === "list-ready" ? 8 : row.progress || 0;
+    return `
+      <div class="status-strip" data-stage="${row.status}">
+        ${steps}
+      </div>
+      <div class="bar" aria-hidden="true"><i style="width:${width}%"></i></div>`;
+  }
+
+  function campaignCard(row, active) {
+    if (row.status === "snoozed") {
+      return `
+        <article class="campaign campaign--parked" id="camp-${row.id}">
+          <p>${esc(row.title)} — not now</p>
+          <button type="button" class="btn btn--ghost" data-restore-campaign="${row.id}">Bring back</button>
+        </article>`;
+    }
+    const variants = (row.variants || [])
+      .map((variant) => `<li><b>${fmt(variant.count)}</b> ${esc(variant.name)}</li>`)
+      .join("");
+    const rates = row.rates
+      ? `<p class="hint">Mock rates: ${(row.variants || [])
+          .map((variant) => `${esc(variant.name)} ${row.rates[variant.id] || "—"}`)
+          .join(" · ")}</p>`
+      : "";
+    const running = campaignsApi.isOpen(row);
+    const strip = running ? statusStrip(row) : "";
+    const actions = running
+      ? ""
+      : `
+        <div class="actions">
+          <button type="button" class="btn" data-ok-campaign="${row.id}">OK — run</button>
+          <button type="button" class="btn btn--ghost" data-edit-campaign="${row.id}">Edit</button>
+          <button type="button" class="btn btn--ghost" data-snooze-campaign="${row.id}">Not now</button>
+        </div>`;
+    const hero = row.id === "locallogic-base" && row.status === "proposed" ? " campaign--hero" : "";
+    return `
+      <article class="campaign${hero}${active ? " campaign--active" : ""}" id="camp-${row.id}" data-active="${
+        active ? "true" : "false"
+      }">
+        ${badge("example")}
+        <h3>${esc(row.title)}</h3>
+        <p><strong>Who.</strong> ${esc(row.who)}</p>
+        <p><strong>Why.</strong> ${esc(row.why)}</p>
+        <p><strong>Counts.</strong> ${fmt(row.audience)} people</p>
+        <p><strong>Variants.</strong></p>
+        <ul>${variants}</ul>
+        <p class="video-note">Standard HeyGen video: “${esc(row.video)}”</p>
+        <p><strong>Success metric.</strong> ${esc(row.successMetric)}</p>
+        <p><strong>Call queue.</strong> about ${fmt(row.callQueueEstimate)} — ${esc(row.callQueueNote)}</p>
+        <p class="hint">Sends when wired — mock only</p>
+        ${strip}
+        ${rates}
+        ${actions}
+      </article>`;
+  }
+
+  function campaignsScreen(focusId) {
+    const cards = campaigns.map((row) => campaignCard(row, row.id === focusId)).join("");
+    return `
+      ${topicHead("Campaigns", "example", data.campaigns.glance)}
+      ${banner("Example data — not live AI yet")}
+      ${analyzeButton()}
+      <p class="hint">DNAi proposes. You say OK. The machine does everything except phone calls.</p>
+      ${recapHtml()}
+      <div class="campaigns">${cards}</div>`;
+  }
+
+  function analyzeHtml() {
+    const analysis = campaignsApi.buildAnalysis({
+      campaigns,
+      lists,
+      product: data.product,
+      listsApi,
+    });
+    const where = analysis.where.map((line) => `<p>${esc(line)}</p>`).join("");
+    const done = analysis.done.map((line) => `<p>${esc(line)}</p>`).join("");
+    const next = analysis.next
+      .map(
+        (item) => `
+        <section class="detail">
+          <h3>${esc(item.title)}</h3>
+          <p>${esc(item.why)}</p>
+          <button type="button" class="btn" data-suggest="${item.id}" data-suggest-action="${item.action}">${esc(
+            item.label
+          )}</button>
+        </section>`
+      )
+      .join("");
+    return `
+      ${banner("Example — not live AI yet")}
+      <section class="analyze-section">
+        <h3>Where we are</h3>
+        ${where}
+      </section>
+      <section class="analyze-section">
+        <h3>What we’ve done</h3>
+        ${done}
+      </section>
+      <section class="analyze-section">
+        <h3>Suggested next</h3>
+        ${next}
+      </section>`;
+  }
+
+  function openAnalyze() {
+    openDrawer("Example — not live AI yet", "Complete analysis", analyzeHtml());
+    drawer.classList.add("drawer--analyze");
+  }
+
+  function startProgress(id) {
+    if (progressTimers[id]) return;
+    progressTimers[id] = setInterval(() => {
+      const row = campaignsApi.findCampaign(campaigns, id);
+      if (!row || !campaignsApi.needsTick(row)) {
+        clearInterval(progressTimers[id]);
+        delete progressTimers[id];
+        return;
+      }
+      campaigns = campaigns.map((item) => (item.id === id ? campaignsApi.tick(item) : item));
+      saveCampaigns(campaigns);
+      keepScroll = true;
+      if (route().tab === "campaigns") render();
+    }, 900);
+  }
+
+  function resumeProgress() {
+    campaigns.forEach((row) => {
+      if (campaignsApi.needsTick(row)) startProgress(row.id);
+    });
+  }
+
+  function clearProgress() {
+    Object.keys(progressTimers).forEach((id) => {
+      clearInterval(progressTimers[id]);
+      delete progressTimers[id];
+    });
+  }
+
+  function runCampaign(id) {
+    const row = campaignsApi.findCampaign(campaigns, id);
+    if (!row) return;
+    if (row.status !== "proposed" && row.status !== "snoozed") return;
+    const start = row.status === "snoozed" ? campaignsApi.restore(row) : row;
+    campaigns = campaigns.map((item) => (item.id === id ? campaignsApi.approve(start) : item));
+    saveCampaigns(campaigns);
+    recap = "OK — running in this browser. Sends when wired — mock only.";
+    startProgress(id);
+  }
+
+  function goCampaign(id, shouldRun) {
+    if (shouldRun) runCampaign(id);
+    const next = hashFor("campaigns", "", id);
+    if (location.hash === next) {
+      render();
+      return;
+    }
+    location.hash = next;
+  }
+
+  function openEditCampaign(id) {
+    const row = campaignsApi.findCampaign(campaigns, id);
+    if (!row) return;
+    openDrawer(
+      "Example data",
+      "Edit plan",
+      `
+      ${banner("Example — still mock only")}
+      <form class="note-form" data-edit-campaign-form="${id}">
+        <label class="picker"><span>Who</span><input name="who" value="${esc(row.who)}" /></label>
+        <label class="picker"><span>Why</span><textarea name="why">${esc(row.why)}</textarea></label>
+        <button class="btn" type="submit">Save plan</button>
+      </form>`
+    );
+  }
+
   function reviewHtml(plan) {
     const cards = plan.items
       .map((item, index) => {
@@ -637,6 +892,7 @@
   }
 
   function closeDrawer() {
+    drawer.classList.remove("drawer--analyze");
     drawerRoot.hidden = true;
     document.body.style.overflow = "";
     if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
@@ -817,7 +1073,7 @@
     statusEl.dataset.tone = needsLook ? "watch" : "ok";
     statusEl.textContent = needsLook ? "Needs a look" : "All clear";
     markTabs(tab);
-    if (tab !== "opportunities" && typeof recap === "string") recap = null;
+    if (tab !== "opportunities" && tab !== "campaigns" && typeof recap === "string") recap = null;
     const onHome = tab === "home";
     board.hidden = !onHome;
     topic.hidden = onHome;
@@ -845,6 +1101,8 @@
     } else if (tab === "customers") {
       const person = item ? personById(item) : null;
       topic.innerHTML = person ? customerDetailScreen(person) : customersScreen();
+    } else if (tab === "campaigns") {
+      topic.innerHTML = campaignsScreen(item);
     } else {
       topic.innerHTML = productScreen();
     }
@@ -857,6 +1115,7 @@
     else window.scrollTo(0, 0);
   }
 
+  resumeProgress();
   render();
   window.addEventListener("hashchange", () => {
     closeDrawer();
@@ -871,11 +1130,60 @@
     if (event.target.closest("[data-reset]")) {
       customers = seedCustomers();
       lists = seedLists();
+      campaigns = seedCampaigns();
       saveCustomers(customers);
       saveLists(lists);
+      saveCampaigns(campaigns);
+      clearProgress();
       recap = null;
       selectedIds = new Set();
       render();
+      return;
+    }
+    if (event.target.closest("[data-analyze]")) {
+      openAnalyze();
+      return;
+    }
+    const okCamp = event.target.closest("[data-ok-campaign]");
+    if (okCamp) {
+      goCampaign(okCamp.getAttribute("data-ok-campaign"), true);
+      return;
+    }
+    const editCamp = event.target.closest("[data-edit-campaign]");
+    if (editCamp) {
+      openEditCampaign(editCamp.getAttribute("data-edit-campaign"));
+      return;
+    }
+    const snoozeCamp = event.target.closest("[data-snooze-campaign]");
+    if (snoozeCamp) {
+      const id = snoozeCamp.getAttribute("data-snooze-campaign");
+      campaigns = campaigns.map((item) => (item.id === id ? campaignsApi.snooze(item) : item));
+      saveCampaigns(campaigns);
+      recap = "Parked for later.";
+      keepScroll = true;
+      render();
+      return;
+    }
+    const restoreCamp = event.target.closest("[data-restore-campaign]");
+    if (restoreCamp) {
+      const id = restoreCamp.getAttribute("data-restore-campaign");
+      campaigns = campaigns.map((item) => (item.id === id ? campaignsApi.restore(item) : item));
+      saveCampaigns(campaigns);
+      recap = "Brought back — still waiting for OK.";
+      keepScroll = true;
+      render();
+      return;
+    }
+    const suggest = event.target.closest("[data-suggest]");
+    if (suggest) {
+      const id = suggest.getAttribute("data-suggest");
+      const action = suggest.getAttribute("data-suggest-action");
+      closeDrawer();
+      if (action === "lists") {
+        location.hash = hashFor("lists", id);
+        return;
+      }
+      goCampaign(id, action === "ok");
       return;
     }
     const sample = event.target.closest("[data-sample-import]");
@@ -921,6 +1229,20 @@
   });
 
   document.addEventListener("submit", (event) => {
+    const editForm = event.target.closest("[data-edit-campaign-form]");
+    if (editForm) {
+      event.preventDefault();
+      const id = editForm.getAttribute("data-edit-campaign-form");
+      campaigns = campaigns.map((item) =>
+        item.id === id ? campaignsApi.edit(item, { who: editForm.who.value, why: editForm.why.value }) : item
+      );
+      saveCampaigns(campaigns);
+      recap = "Plan updated — still mock only.";
+      closeDrawer();
+      keepScroll = true;
+      render();
+      return;
+    }
     const form = event.target.closest("[data-add-note]");
     if (!form) return;
     event.preventDefault();
