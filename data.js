@@ -1,6 +1,6 @@
 /* DN Today — board snapshot.
    Product figures are live as of 2026-09-13.
-   Views, opportunities, lists, customers, and notes are invented examples. */
+   Views, opportunities, lists, customers, campaigns, and notes are invented examples. */
 
 window.DN_TODAY = {
   asOf: "2026-09-13",
@@ -517,5 +517,84 @@ window.DN_TODAY = {
     dataKind: "example",
     status: "watch",
     glance: "Talk to people who wrote back",
+  },
+
+  campaigns: {
+    id: "campaigns",
+    title: "Campaigns",
+    dataKind: "example",
+    status: "watch",
+    glance: "DNAi proposes. You say OK. The machine does everything except phone calls.",
+    items: [
+      {
+        id: "locallogic-base",
+        title: "LocalLogic base",
+        who: "LocalLogic offices — the current base",
+        why: "They already pay for neighborhood data. Show Neighborhood Explorer on their listings and measure which video actually gets a reply.",
+        audience: 1500,
+        variants: [
+          { id: "personalized", name: "Personalized video", count: 500 },
+          { id: "generic", name: "Generic video", count: 500 },
+          { id: "none", name: "No video", count: 500 },
+        ],
+        video: "Switch from LocalLogic — Neighborhood Explorer on your listings",
+        successMetric: "Response rate by variant",
+        callQueueEstimate: 1500,
+        callQueueNote: "Queue phone follow-up on every reply, then every non-reply",
+        planAfter: "After tracking, propose the next plan from the winning variant.",
+        status: "proposed",
+        progress: 0,
+        rates: null,
+        queueSize: 0,
+        startedAt: "",
+        history: [],
+      },
+      {
+        id: "idxbroker",
+        title: "IDXBroker plugin clients",
+        who: "IDXBroker plugin clients — no neighborhood data",
+        why: "Their listing pages have no neighborhood story. Offer the embed where the data is missing.",
+        audience: 900,
+        variants: [
+          { id: "personalized", name: "Personalized video", count: 300 },
+          { id: "generic", name: "Generic video", count: 300 },
+          { id: "none", name: "No video", count: 300 },
+        ],
+        video: "Neighborhood data on every IDX listing",
+        successMetric: "Response rate + meetings booked",
+        callQueueEstimate: 900,
+        callQueueNote: "Queue replies first, then non-replies",
+        planAfter: "After tracking, double down on the variant that booked meetings.",
+        status: "proposed",
+        progress: 0,
+        rates: null,
+        queueSize: 0,
+        startedAt: "",
+        history: [],
+      },
+      {
+        id: "developers",
+        title: "Top 200 USA realtor website developers",
+        who: "Top 200 USA realtor website developers",
+        why: "Partner pitch — they can put Neighborhood Explorer on every client site they ship.",
+        audience: 200,
+        variants: [
+          { id: "personalized", name: "Personalized video", count: 80 },
+          { id: "generic", name: "Generic video", count: 60 },
+          { id: "none", name: "Email only, no video", count: 60 },
+        ],
+        video: "Offer Neighborhood Explorer on every client site",
+        successMetric: "Partner conversations started",
+        callQueueEstimate: 200,
+        callQueueNote: "Queue every reply, then the rest",
+        planAfter: "After conversations start, propose a partner kit for the shops that said yes.",
+        status: "proposed",
+        progress: 0,
+        rates: null,
+        queueSize: 0,
+        startedAt: "",
+        history: [],
+      },
+    ],
   },
 };
